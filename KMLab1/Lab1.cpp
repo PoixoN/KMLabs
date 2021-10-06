@@ -3,7 +3,7 @@
 
 using namespace std;
 
-const double A = 1;
+const double A = 0.00000000001;
 const double B = 5;
 const double E = 0.05;
 
@@ -13,9 +13,9 @@ double f(double x)
 }
 
 double SimsonMethod() {
-	double I = E + 1, I1 = 0;
+	double I = 0, I1 = -E - 1;
 
-	for (int N = 2; (N <= 4) || (fabs(I1 - I) > E); N *= 2)
+	for (int N = 2; (N <= 666) || (fabs(I1 - I) / 15 > E); N *= 2)
 	{
 		double h, sumA = 0, sumB = 0, sum = 0;
 		h = (B - A) / (2 * N);
@@ -25,7 +25,8 @@ double SimsonMethod() {
 			sumB += f(A + h * i);
 			sumA += f(A + h * (i + 1));
 		}
-		sum = f(A) + 4 * sumB + 2 * sumA - f(B);
+
+		sum = f(A) + 4 * sumB + 2 * sumA + f(B);
 		I = I1;
 		I1 = (h / 3) * sum;
 	}
