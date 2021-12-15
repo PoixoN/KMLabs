@@ -1,106 +1,146 @@
-#include <iostream>
+﻿#include <iostream>
 #include <cmath>
+#include <iomanip>
+#include <cstdlib>
+#include <cstring>
+#include <clocale>
+#include <map>
+#include <vector>
+
 using namespace std;
 
+double stepsAmount = 10;
+double intervalStart = 0;
+double intervalEnd = 1;
+double h = 0.1; // (intervalEnd - intervalStart) / stepsAmount;
+
+class TridiagonalMatrixElement
+{
+public:
+	double first;
+	double middle;
+	double last;
+	double result;
+};
+
+class TridiagonalMatrixTempElement
+{
+public:
+	double y;
+	double alpha;
+	double betta;
+	double result;
+};
+
+double f(double x) {
+	return 3;
+}
+
 double p(double x) {
-    return exp(x);
+	return 2 * x;
 }
 
 double q(double x) {
-    return 2 * x;
+	return 2;
 }
 
-double f(double x) {
-    return pow(x, 3);
+map<double, double> Progonka(vector<TridiagonalMatrixElement> elements) {
+	vector<TridiagonalMatrixTempElement> tridiagonalTempElements;
+	TridiagonalMatrixTempElement tmte;
+	double y1 = elements[0].middle;
+
+	tmte.y = y1;
+	tmte.alpha = -elements[0].last / y1;
+	tmte.betta = elements[0].result / y1;
+
+	tridiagonalTempElements.push_back(tmte);
+
+	for (int i = 1; i < elements.size(); i++)
+	{
+		auto matrixElement = elements[i];
+
+		double y_i = matrixElement.middle + matrixElement.first * tridiagonalTempElements[i - 1].alpha;
+
+		tmte.y = y_i;
+		tmte.alpha = -matrixElement.last / y_i;
+		tmte.betta = (matrixElement.result - matrixElement.first * tridiagonalTempElements[i - 1].betta) / y_i;
+		tridiagonalTempElements.push_back(tmte);
+	}
+
+	pair<double, double> p;
+	p.first = 0.0;
+	p.second = 0.0;
+	vector<pair<double, double>> resultList(elements.size(), p);
+
+	p.first = intervalEnd;
+	p.second = tridiagonalTempElements[tridiagonalTempElements.size() - 1].betta;
+
+	resultList[elements.size() - 1] = p;
+
+	for (int i = elements.size() - 2; i > 0; i--)
+	{
+		auto previousTempElement = tridiagonalTempElements[i];
+
+		p.first = intervalStart + i * h;
+		p.second = previousTempElement.alpha * resultList[i + 1].second + previousTempElement.betta;
+
+		resultList[i] = p;
+	}
+
+	map<double, double> resultMap;
+
+	for (pair<double, double> e : resultList)
+	{
+		resultMap[e.first] = e.second;
+	}
+
+
+	return resultMap;
 }
 
-void gauss(double** A, double* B, double* X, int n);
 
-int main() {
-    double alpha0 = 2; double alpha1 = -2.5; double Ac = 0;
-    double beta0 = 3; double beta1 = -3.4; double Bc = 5;
-    double a0 = 0.1; double b0 = 1.3;
-    int n = 4;
+map<double, double> MakeMatrix() {
+	vector<TridiagonalMatrixElement> tridiagonalElements;;
+	TridiagonalMatrixElement tme;
 
-    double** A = new double* [n + 1];
-    for (int i = 0; i < n + 1; i++) {
-        A[i] = new double[n + 1];
-    }
- 
-    double* B = new double[n + 1];
-    double* X = new double[n + 1]; 
+	tme.first = -1;
+	tme.middle = 1;
+	tme.last = 0;
+	tme.result = 1;
 
-    double h = (b0 - a0) / n;
-    for (int i = 0; i <= n; i++) {
-        X[i] = a0 + i * h;
-    }
+	tridiagonalElements.push_back(tme);
 
-    cout << "h=" << h << endl;
+	for (int position = 1; position < stepsAmount; position++)
+	{
+		double newX = intervalStart + position * h;
 
-    for (int i = 0; i <= n - 2; i++) {
-        A[i][i] = h * h * q(X[i]) - h * p(X[i]) + 1;
-        A[i][i + 1] = h * p(X[i]) - 2;
-        A[i][i + 2] = 1;
-        B[i] = h * h * f(X[i]);
-    }
-    A[n - 1][0] = alpha0 * h - alpha1;
-    A[n - 1][1] = alpha1;
-    A[n][n - 1] = -beta1;
-    A[n][n] = beta0 * h + beta1;
-    B[n - 1] = h * Ac;
-    B[n] = h * Bc;
+		tme.first = 1 / h / h - p(newX) / h / 2;
+		tme.middle = q(newX) - 2 / h / h;
+		tme.last = 1 / h / h + p(newX) / h / 2;
+		tme.result = f(newX);
 
-    for (int i = 0; i <= n; i++) {
-        for (int j = 0; j <= n; j++) {
-            cout << "A[" << i << "]" << "[" << j << "]=" << A[i][j] << " ";
-        }
-        cout << endl;
-    }
-    cout << endl;
-    for (int i = 0; i <= n; i++) {
-        cout << "B[" << i << "]=" << B[i] << " ";
-    }
-    cout << endl;
-    cout << endl;
-    double* X1 = new double[n + 1];
-    gauss(A, B, X1, n + 1);
-    for (int i = 0; i <= n; i++) {
-        cout << "X1[" << i << "]=" << X1[i] << " ";
-    }
-    return 0;
+		tridiagonalElements.push_back(tme);
+	}
+
+	tme.first = 0.1;
+	tme.middle = 1;
+	tme.last = 0;
+	tme.result = 0;
+
+	tridiagonalElements.push_back(tme);
+
+	return Progonka(tridiagonalElements);
 }
 
-void gauss(double** A, double* B, double* X, int n) {
-    int m = n + 1;
 
-    double** C = new double* [n];
-    for (int i = 0; i < n; i++) {
-        C[i] = new double[n + 1];
-    }
+void main()
+{
+	map<double, double> points = MakeMatrix();
 
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) {
-            C[i][j] = A[i][j];
-        }
-        C[i][n] = B[i];
-    }
+	for (auto p : points)
+	{
+		cout << "x = " << p.first << "\ty = " << p.second << endl;
+	}
 
-    for (int k = 0; k < n - 1; k++) {
-        for (int i = k + 1; i < n; i++) {
-            for (int j = m - 1; j >= k; j--) {
-                C[i][j] = C[i][j] - C[i][k] * C[k][j] / C[k][k];
-            }
-        }
-    }
-
-    X[n - 1] = A[n - 1][m - 2] / A[n - 1][m - 2];
-
-    for (int i = n - 2; i >= 0; i--) {
-        double s = 0;
-        for (int j = i + 1; j < m - 1; j++) {
-            s = s + C[i][j] * X[j];
-        }
-        X[i] = (C[i][m - 1] - s) / C[i][i];
-    }
-
+	system("pause");
 }

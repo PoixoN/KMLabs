@@ -7,7 +7,7 @@ const double A = 0.00000000001;
 const double B = 5;
 const double E = 0.05;
 
-double f(double x)
+double q(double x)
 {
 	return 1 / (sqrt(x * (1 + x * x)));
 }
@@ -22,11 +22,11 @@ double SimsonMethod() {
 
 		for (int i = 1; i <= 2 * N - 1; i += 2)
 		{
-			sumB += f(A + h * i);
-			sumA += f(A + h * (i + 1));
+			sumB += q(A + h * i);
+			sumA += q(A + h * (i + 1));
 		}
 
-		sum = f(A) + 4 * sumB + 2 * sumA + f(B);
+		sum = q(A) + 4 * sumB + 2 * sumA + q(B);
 		I = I1;
 		I1 = (h / 3) * sum;
 	}
